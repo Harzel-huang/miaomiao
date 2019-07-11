@@ -1,110 +1,174 @@
 <template>
-    	<div class="city_body">
-				<div class="city_list">
-					<div class="city_hot">
-						<h2>热门城市</h2>
-						<ul class="clearfix">
-							<li>上海</li>
-							<li>北京</li>
-							<li>上海</li>
-							<li>北京</li>
-							<li>上海</li>
-							<li>北京</li>
-							<li>上海</li>
-							<li>北京</li>
-						</ul>
-					</div>
-					<div class="city_sort">
-						<div>
-							<h2>A</h2>
-							<ul>
-								<li>阿拉善盟</li>
-								<li>鞍山</li>
-								<li>安庆</li>
-								<li>安阳</li>
-							</ul>
-						</div>
-						<div>
-							<h2>B</h2>
-							<ul>
-								<li>北京</li>
-								<li>保定</li>
-								<li>蚌埠</li>
-								<li>包头</li>
-							</ul>
-						</div>
-						<div>
-							<h2>A</h2>
-							<ul>
-								<li>阿拉善盟</li>
-								<li>鞍山</li>
-								<li>安庆</li>
-								<li>安阳</li>
-							</ul>
-						</div>
-						<div>
-							<h2>B</h2>
-							<ul>
-								<li>北京</li>
-								<li>保定</li>
-								<li>蚌埠</li>
-								<li>包头</li>
-							</ul>
-						</div>
-						<div>
-							<h2>A</h2>
-							<ul>
-								<li>阿拉善盟</li>
-								<li>鞍山</li>
-								<li>安庆</li>
-								<li>安阳</li>
-							</ul>
-						</div>
-						<div>
-							<h2>B</h2>
-							<ul>
-								<li>北京</li>
-								<li>保定</li>
-								<li>蚌埠</li>
-								<li>包头</li>
-							</ul>
-						</div>	
-					</div>
-				</div>
-				<div class="city_index">
-					<ul>
-						<li>A</li>
-						<li>B</li>
-						<li>C</li>
-						<li>D</li>
-						<li>E</li>
-					</ul>
-				</div>
-			</div>
+  <div class="city_body">
+    <div class="city_list">
+      <div class="city_hot">
+        <h2>热门城市</h2>
+        <ul class="clearfix">
+          <li v-for="item in hostlist" :key="item.id">{{item.nm}}</li>
+        </ul>
+      </div>
+      <div class="city_sort" ref="city_ref">
+        <div v-for="item in cityList" :key="item.index">
+          <h2>{{item.index}}</h2>
+          <ul>
+            <li v-for="itemList in item.list" :key="itemList.id">{{itemList.nm}}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="city_index">
+      <ul>
+        <li
+          v-for="(item,index) in cityList"
+          :key="item.index"
+          @click="touchHandel(index)"
+        >{{item.index}}</li>
+      </ul>
+    </div>
+  </div>
 </template>
 
 <script>
 export default {
-    name:'city'
+  name: "city",
+  data() {
+    return {
+      cityList: [],
+      hostlist: []
+    };
+  },
 
+  mounted() {
+    this.axios.get("/api/cityList").then(res => {
+      var msg = res.data.msg;
+      if (msg === "ok") {
+        //     this.isLoading = false;
+        var cities = res.data.data.cities;
+        var { cityList, hostlist } = this.formatCityList(cities);
+        this.cityList = cityList;
+        this.hostlist = hostlist;
+      }
+    });
+  },
+  methods: {
+    formatCityList(cities) {
+      var hostlist = [];
+      var cityList = [];
+      var citiesCount = cities.length;
 
-}
+      for (var z = 0; z < citiesCount; z++) {
+        if (cities[z].isHot === 1) {
+          hostlist.push(cities[z]);
+        }
+      }
+      for (var i = 0; i < citiesCount; i++) {
+        var citiesIndex = cities[i].py.substring(0, 1).toUpperCase();
+        if (tocom(citiesIndex)) {
+          cityList.push({
+            index: citiesIndex,
+            list: [{ nm: cities[i].nm, id: cities[i].id }]
+          });
+        } else {
+          for (var j = 0; j < cityList.length; j++) {
+            if (cityList[j].index == citiesIndex) {
+              cityList[j].list.push({ nm: cities[i].nm, id: cities[i].id });
+            }
+          }
+        }
+      }
+      cityList.sort((a, b) => {
+        if (a.index > b.index) {
+          return 1;
+        } else {
+          return -1;
+        }
+      });
+      function tocom(citiesIndex) {
+        for (var i = 0; i < cityList.length; i++) {
+          if (cityList[i].index == citiesIndex) {
+            return false;
+          }
+        }
+        return true;
+      }
+      // console.log(cityList);
+      return { cityList, hostlist };
+    },
+    touchHandel(index) {
+      // console.log(index)
+      var h2 = this.$refs.city_ref.getElementsByTagName("h2");
+      this.$refs.city_ref.parentNode.scrollTop = h2[index].offsetTop;
+    }
+  }
+};
 </script>
 
 <style scoped>
-
-#content .city_body{ margin-top: 45px; display: flex; width:100%; position: absolute; top: 0; bottom: 0;}
-.city_body .city_list{ flex:1; overflow: auto; background: #FFF5F0;}
-.city_body .city_list::-webkit-scrollbar{
-    background-color:transparent;
-    width:0;
+#content .city_body {
+  margin-top: 45px;
+  display: flex;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  bottom: 0;
 }
-.city_body .city_hot{ margin-top: 20px;}
-.city_body .city_hot h2{ padding-left: 15px; line-height: 30px; font-size: 14px; background:#F0F0F0; font-weight: normal;}
-.city_body .city_hot ul li{ float: left; background: #fff; width: 29%; height: 33px; margin-top: 15px; margin-left: 3%; padding: 0 4px; border: 1px solid #e6e6e6; border-radius: 3px; line-height: 33px; text-align: center; box-sizing: border-box;}
-.city_body .city_sort div{ margin-top: 20px;}
-.city_body .city_sort h2{ padding-left: 15px; line-height: 30px; font-size: 14px; background:#F0F0F0; font-weight: normal;}
-.city_body .city_sort ul{ padding-left: 10px; margin-top: 10px;}
-.city_body .city_sort ul li{ line-height: 30px; line-height: 30px;}
-.city_body .city_index{ width:20px; display: flex; flex-direction:column; justify-content:center; text-align: center; border-left:1px #e6e6e6 solid;}
+.city_body .city_list {
+  flex: 1;
+  overflow: auto;
+  background: #fff5f0;
+}
+.city_body .city_list::-webkit-scrollbar {
+  background-color: transparent;
+  width: 0;
+}
+.city_body .city_hot {
+  margin-top: 20px;
+}
+.city_body .city_hot h2 {
+  padding-left: 15px;
+  line-height: 30px;
+  font-size: 14px;
+  background: #f0f0f0;
+  font-weight: normal;
+}
+.city_body .city_hot ul li {
+  float: left;
+  background: #fff;
+  width: 29%;
+  height: 33px;
+  margin-top: 15px;
+  margin-left: 3%;
+  padding: 0 4px;
+  border: 1px solid #e6e6e6;
+  border-radius: 3px;
+  line-height: 33px;
+  text-align: center;
+  box-sizing: border-box;
+}
+.city_body .city_sort div {
+  margin-top: 20px;
+}
+.city_body .city_sort h2 {
+  padding-left: 15px;
+  line-height: 30px;
+  font-size: 14px;
+  background: #f0f0f0;
+  font-weight: normal;
+}
+.city_body .city_sort ul {
+  padding-left: 10px;
+  margin-top: 10px;
+}
+.city_body .city_sort ul li {
+  line-height: 30px;
+  line-height: 30px;
+}
+.city_body .city_index {
+  width: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  border-left: 1px #e6e6e6 solid;
+}
 </style>
