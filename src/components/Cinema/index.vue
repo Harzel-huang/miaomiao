@@ -15,7 +15,8 @@
       </div>
     </div>
     <div class="cinema_body">
-      <ul>
+      <loading v-if="isLoading"></loading>
+      <ul v-else>
         <li v-for="item in cinemas" :key="item.id">
           <div>
             <span>{{item.nm}}</span>
@@ -29,7 +30,12 @@
           </div>
           <div class="card">
             <!-- 注意添加样式，也是用适配器filters  ：class=" 内容 | 适配规则" -->
-            <div v-for="(card,key) in item.tag" v-if="card===1" :key="key" :class="key | colorfilter(key)">{{key | cardfilter(key)}}</div>
+            <div
+              v-for="(card,key) in item.tag"
+              v-if="card===1"
+              :key="key"
+              :class="key | colorfilter(key)"
+            >{{key | cardfilter(key)}}</div>
           </div>
         </li>
       </ul>
@@ -42,14 +48,23 @@ export default {
   name: "cinemaComponent",
   data() {
     return {
-      cinemas: []
+      cinemas: [],
+      cityId: -1,
+      isLoading: true
     };
   },
-  mounted() {
-    this.axios.get("/api/cinemaList?cityId=10").then(res => {
-      var msg = res.data.msg;
-      if (msg === "ok") {
+  activated() {
+    let cityId = this.$store.state.city.id;
+    if (this.cityId === cityId) return;
+    this.isLoading = true;
+    this.axios.get("/api/cinemaList?cityId=" + cityId).then(res => {
+      // console.log(res)
+      // 判断数据是否请求成功
+      if (res.status === 200) {
+        // 将数据赋值到存放的数据数组中
         this.cinemas = res.data.data.cinemas;
+        this.cityId = cityId;
+        this.isLoading = false;
       }
     });
   },
@@ -66,7 +81,7 @@ export default {
           return cardlist[i].values;
         }
       }
-      return '';
+      return "";
     },
     colorfilter(key) {
       var cardlist = [

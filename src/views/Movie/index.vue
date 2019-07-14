@@ -4,7 +4,7 @@
        <div id="content">
            <div class="movie_menu">
 				<router-link tag="div" to='/movie/city' class="city_name">
-					<span>大连</span><i class="iconfont icon-lower-triangle"></i>
+					<span> {{ $store.state.city.nm}}</span><i class="iconfont icon-lower-triangle"></i>
 				</router-link>
 				<div class="hot_swtich">
 					<router-link tag="div" to='/movie/nowPlaying' class="hot_item active">正在热映</router-link>
@@ -19,6 +19,7 @@
             </keep-alive>    
        </div>
        <TabBar />
+        <router-view name="detail"/>
    </div>
 </template>
 
@@ -26,13 +27,49 @@
 
 import Header from '@/components/Header';
 import TabBar from '@/components/TabBar';
+import { messageBox } from "@/components/js";
 
 export default {
 name:'movie',
 components:{
     Header,
-    TabBar
-}
+    TabBar,
+    
+},
+mounted() {
+    // 调用城市定位的location
+    this.axios.get("/api/getLocation").then(res => {
+      // console.log(res)
+      // 判断是否调用成功
+      if (res.status === 200) {
+        // console.log(res.data.data.nm);
+        // 做出一个判断，当前城市与选择城市一致的时候。不用弹窗
+        if (this.$store.state.city.id == res.data.data.id) return;
+        // 调用messageBox()函数
+        // 为了提高体验度，加一个定时器
+        setTimeout(() => {
+          messageBox({
+            title: "定位",
+            content: res.data.data.nm,
+            cancel: "取消",
+            ok: "切换定位",
+            // 取消事件暂时不用处理
+            // handleCancel() {
+            //   console.log(1);
+            // },
+            handleOk() {
+              // console.log(2);
+              // 将获取到的数据本地存储
+              window.localStorage.setItem("city_nm", res.data.data.nm);
+              window.localStorage.setItem("city_id", res.data.data.id);
+              // 刷新本页
+              window.location.reload();
+            }
+          });
+        }, 1000);
+      }
+    });
+  }
 }
 </script>
 

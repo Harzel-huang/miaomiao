@@ -1,8 +1,9 @@
 <template>
-    <div class="movie_body">
+    <div class="movie_body" ref="movie_body">
 				<ul>
 					<li v-for="item in comingList" :key="item.id">
-						<div class="pic_show"><img :src="item.img | setWH('128.180')"></div>
+						<div class="pic_show">
+							<img :src="item.img | setWH('128.180')" @click="handleClick()"></div>
 						<div class="info_list">
 							<h2>{{item.nm}}</h2>
 							<p><span class="person">{{item.wish}}</span> 人想看</p>
@@ -18,6 +19,7 @@
 </template>
 
 <script>
+import Bscroll from 'better-scroll'
 export default {
 	name:'comingsoon',
 	data(){
@@ -31,9 +33,20 @@ export default {
 		this.axios.get('/api/movieComingList?cityId=10').then((res)=>{
 			if(res.data.msg==="ok"){
 				this.comingList=res.data.data.comingList;
+				this.$nextTick(()=>{
+					new Bscroll(this.$refs.movie_body,{
+						handleClick:true
+
+					})
+				})
 			}
 			
 		})
+	},
+	methods:{
+		handleClick(){
+
+		}
 	}
 
 }

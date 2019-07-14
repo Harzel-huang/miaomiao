@@ -1,11 +1,10 @@
 <template>
-  <header id="header">
-    <h1>{{title}}</h1>
-  </header>
+  <div id="header">
+    <slot></slot><h1>{{title}}</h1>
+  </div>
 </template>
 
 <script>
-import { Stats } from 'fs';
 export default {
   name: "HeaderView",
   props:{
@@ -36,7 +35,7 @@ export default {
   position: absolute;
   left: 5px;
   top: 50%;
-  margin-top: -13px;
+  margin-top: 7px;
   font-size: 26px;
 }
 </style>
