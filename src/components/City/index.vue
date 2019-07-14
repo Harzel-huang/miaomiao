@@ -1,20 +1,33 @@
 <template>
   <div class="city_body">
     <div class="city_list">
-      <div class="city_hot">
-        <h2>热门城市</h2>
-        <ul class="clearfix">
-          <li v-for="item in hostlist" :key="item.id">{{item.nm}}</li>
-        </ul>
-      </div>
-      <div class="city_sort" ref="city_ref">
-        <div v-for="item in cityList" :key="item.index">
-          <h2>{{item.index}}</h2>
-          <ul>
-            <li v-for="itemList in item.list" :key="itemList.id">{{itemList.nm}}</li>
-          </ul>
+      <loading v-if="isLoading"></loading>
+      <scroller ref="jump" v-else>
+        <div>
+          <div class="city_hot">
+            <h2>热门城市</h2>
+            <ul class="clearfix">
+              <li
+                v-for="item in hostlist"
+                :key="item.id"
+                @click="changCity(item.nm,item.id)"
+              >{{item.nm}}</li>
+            </ul>
+          </div>
+          <div class="city_sort" ref="city_ref">
+            <div v-for="item in cityList" :key="item.index">
+              <h2>{{item.index}}</h2>
+              <ul>
+                <li
+                  v-for="itemList in item.list"
+                  :key="itemList.id"
+                  @click="changCity(itemList.nm,itemList.id)"
+                >{{itemList.nm}}</li>
+              </ul>
+            </div>
+          </div>
         </div>
-      </div>
+      </scroller>
     </div>
     <div class="city_index">
       <ul>
@@ -29,26 +42,39 @@
 </template>
 
 <script>
+import Bscroll from "better-scroll";
 export default {
   name: "city",
   data() {
     return {
       cityList: [],
-      hostlist: []
+      hostlist: [],
+      isLoading:true
     };
   },
 
   mounted() {
-    this.axios.get("/api/cityList").then(res => {
-      var msg = res.data.msg;
-      if (msg === "ok") {
-        //     this.isLoading = false;
-        var cities = res.data.data.cities;
-        var { cityList, hostlist } = this.formatCityList(cities);
-        this.cityList = cityList;
-        this.hostlist = hostlist;
-      }
-    });
+    let cityData = window.localStorage.getItem("cityList");
+    let hostCity = window.localStorage.getItem("hostCity");
+    // 判断本地存储是否存在，存在就不发送ajax请求
+    if (cityData && hostCity) {
+      this.cityData = JSON.parse(cityData);
+      this.hostCity = JSON.parse(hostCity);
+      this.isLoading = false;
+    } else {
+      this.axios.get("/api/cityList").then(res => {
+        var msg = res.data.msg;
+        if (msg === "ok") {
+          this.isLoading = false;
+          var cities = res.data.data.cities;
+          var { cityList, hostlist } = this.formatCityList(cities);
+          this.cityList = cityList;
+          this.hostlist = hostlist;
+          window.localStorage.setItem("cityList", JSON.stringify(cityList));
+          window.localStorage.setItem("hostCity", JSON.stringify(hostlist));
+        }
+      });
+    }
   },
   methods: {
     formatCityList(cities) {
@@ -97,7 +123,18 @@ export default {
     touchHandel(index) {
       // console.log(index)
       var h2 = this.$refs.city_ref.getElementsByTagName("h2");
-      this.$refs.city_ref.parentNode.scrollTop = h2[index].offsetTop;
+      this.$refs.jump.jump(-h2[index].offsetTop);
+      // this.$refs.city_ref.parentNode.scrollTop = h2[index].offsetTop;
+    },
+    changCity(nm, id) {
+      // console.log(nm, id)
+      // 调用vuex中的mutations中的方法进行处理  ok
+      this.$store.commit("city/CITY_INFO", { nm, id });
+      // 为了返回时，城市数据不再该改变。将数据本地化处理
+      window.localStorage.setItem("city_nm", nm);
+      window.localStorage.setItem("city_id", id);
+      // 编程式导航
+      this.$router.push("/movie/nowPlaying");
     }
   }
 };
